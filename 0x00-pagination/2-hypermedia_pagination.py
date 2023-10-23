@@ -44,7 +44,7 @@ class Server:
         """Function to get a page
         """
         try:
-            assert(type(page) == int)
+            assert(type(page) == int) 
             assert(type(page_size) == int)
         except AssertionError:
             raise AssertionError()
