@@ -1,44 +1,49 @@
-#!/bin/env/python3
-"""LFUCache"""
-
-
+#!/usr/bin/python3
+""" LFU Caching """
 from base_caching import BaseCaching
+from collections import OrderedDict
 
 
 class LFUCache(BaseCaching):
-    """
-    """
-
+    """ Class that inherits from BaseCaching and is a caching system """
     def __init__(self):
-        """
-        """
         super().__init__()
-        self.keys = []
+        self.lru_cache = OrderedDict()
+        self.lfu_cache = {}
 
     def put(self, key, item):
-        """
-        """
-        if key and item:
-            self.cache_data[key] = item
-
-        if key in self.keys:
-            self.keys.remove(key)
-
-        self.keys.append(key)
-
-        if key and item:
-            if len(self.cache_data) > BaseCaching.MAX_ITEMS:
-                to_discard = self.keys[0]
-                print("DISCARD: ", to_discard)
-                self.keys.remove(key)
+        """ Assign to the dictionary, LFU algorithm """
+        if key in self.lru_cache:
+            del self.lru_cache[key]
+        if len(self.lru_cache) > BaseCaching.MAX_ITEMS - 1:
+            min_value = min(self.lfu_cache.values())
+            lfu_keys = [k for k, v in self.lfu_cache.items() if v == min_value]
+            if len(lfu_keys) == 1:
+                print("DISCARD:", lfu_keys[0])
+                self.lru_cache.pop(lfu_keys[0])
+                del self.lfu_cache[lfu_keys[0]]
+            else:
+                for k, _ in list(self.lru_cache.items()):
+                    if k in lfu_keys:
+                        print("DISCARD:", k)
+                        self.lru_cache.pop(k)
+                        del self.lfu_cache[k]
+                        break
+        self.lru_cache[key] = item
+        self.lru_cache.move_to_end(key)
+        if key in self.lfu_cache:
+            self.lfu_cache[key] += 1
+        else:
+            self.lfu_cache[key] = 1
+        self.cache_data = dict(self.lru_cache)
 
     def get(self, key):
-        if key is None:
-            return None
-        if key not in self.cache_data:
-            return None
-
-        if key in self.keys:
-            self.keys.remove(key)
-        self.keys.append(key)
-        return self.cache_data[key]
+        """ Return the value linked """
+        if key in self.lru_cache:
+            value = self.lru_cache[key]
+            self.lru_cache.move_to_end(key)
+            if key in self.lfu_cache:
+                self.lfu_cache[key] += 1
+            else:
+                self.lfu_cache[key] = 1
+            return value
